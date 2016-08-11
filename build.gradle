@@ -209,6 +209,7 @@ def getCredentials = {
             return [username: entry.username.text(), password: entry.password.text()]
         }
     }
+    return [username: System.getProperty("mvn.username"), password: System.getProperty("mvn.password")]
 }
 
 uploadArchives {
