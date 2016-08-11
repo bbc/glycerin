@@ -104,11 +104,14 @@ task generateXmlSource(dependsOn: ['transformSchema', 'createGeneratedSourcesDir
 task fetchApiDescription {
     doLast {
         def baseUrl = System.properties['nitro.baseUrl'] ?: "http://programmes.api.bbc.com/nitro"
-        ant.get(
-            src: baseUrl+"/api?api_key="+System.properties['nitro.apikey'],
-            dest: new File('src/main/resources')
-        ) {
+        def key = System.properties['nitro.apikey']
+        def resources = new File('src/main/resources')
+
+        ant.get(src: baseUrl+"/api?api_key="+ key, dest: resources) {
             mapper(type: "regexp", from: ".*api\\?.*", to: "api.xml")
+        }
+        ant.get(src: baseUrl+"/api/schema?api_key="+ key, dest: resources) {
+            mapper(type: "regexp", from: ".*schema\\?.*", to: "nitro-schema.xsd")
         }
     }
 }
