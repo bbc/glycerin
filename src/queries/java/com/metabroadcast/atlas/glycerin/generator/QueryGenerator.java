@@ -43,6 +43,12 @@ public class QueryGenerator {
         JPackage pkg = model._package(srcPkg);
         FeedQueryGenerator feedQueryGenerator = new FeedQueryGenerator(model, pkg);
         for (Feed feed : feeds.getFeed()) {
+            /* TODO: This is a workaround - consider using last segment of url to generate Model, Query and Mixin class
+             * name instead of name, which is not camelcase on Nitro API.
+             */
+            if("Masterbrands".equals(feed.getName()) ) {
+                feed.setName("MasterBrands");
+            }
             feedQueryGenerator.generateQuery(feed);
         }
         

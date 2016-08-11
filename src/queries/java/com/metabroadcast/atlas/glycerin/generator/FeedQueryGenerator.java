@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.joda.time.LocalDate;
 
 import com.metabroadcast.atlas.glycerin.model.Feed;
@@ -18,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.metabroadcast.atlas.glycerin.model.Version;
+import com.metabroadcast.atlas.glycerin.model.MasterBrand;
 import com.metabroadcast.atlas.glycerin.queries.BaseApiQuery;
 import com.sun.codemodel.JBlock;
 import com.sun.codemodel.JClass;
@@ -51,6 +53,7 @@ public class FeedQueryGenerator {
     private static final ImmutableMap<String, Class<?>> typeMap = ImmutableMap.<String, Class<?>>builder()
         .put("integer", Integer.class)
         .put("datetime", DateTime.class)
+        .put("daytime_duration", Interval.class)
         .put("string", String.class)
         .put("ID", String.class)
         .put("PID", String.class)
@@ -217,7 +220,7 @@ public class FeedQueryGenerator {
     private Class<?> tryLoadClass(String name) {
         try {
             return Class.forName(name);
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | NoClassDefFoundError e) {
             return null;
         }
     }
@@ -228,12 +231,17 @@ public class FeedQueryGenerator {
 
     private void addWithersFor(Filter filter, JDefinedClass bldrCls, JVar paramBuilder) throws ClassNotFoundException, JClassAlreadyExistsException {
         JDefinedClass cls = (JDefinedClass) bldrCls.parentContainer();
-        
-        JFieldVar field = cls.field(privateStaticFinal, String.class, sanitize(filter.getName().toUpperCase()));
+
+        String fieldName = sanitize(filter.getName().toUpperCase() +"_" + filter.getType().toUpperCase());
+        JFieldVar field = cls.field(privateStaticFinal, String.class, fieldName);
         field.init(JExpr.lit(filter.getName()));
         
         JClass paramType = mapType(filter);
-        if (Boolean.TRUE.equals(filter.isMultipleValues())) {
+        /* TODO: Find a way to deal with duplicate type conflict with Iterable for Programmes availability filters
+         */
+        boolean availabilityWorkaround = !("availability".equals(filter.getName()));
+        if (Boolean.TRUE.equals(filter.isMultipleValues()) && availabilityWorkaround) {
+            System.out.println(filter.getName());
             JMethod iterableWither = addIterableWither(filter, bldrCls, paramBuilder, field, paramType);
             addVarArgsWither(filter, iterableWither, bldrCls, paramType);
         } else {
