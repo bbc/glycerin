@@ -216,11 +216,16 @@ def getCredentials = {
     return [username: System.getProperty("mvn.username"), password: System.getProperty("mvn.password")]
 }
 
+def getRepositoryUrl = {
+    return System.getProperty("mvn.artifactory_url","dav:http://mvn.metabroadcast.com:80/public-releases-local")
+}
+
 uploadArchives {
     def creds = getCredentials()
+    def url = getRepositoryUrl()
     repositories.mavenDeployer {
         configuration = configurations.archives
-        repository(url: "dav:http://mvn.metabroadcast.com:80/public-releases-local") {
+        repository(url: url) {
             authentication(userName: creds["username"], password: creds["password"])
         }
     }
